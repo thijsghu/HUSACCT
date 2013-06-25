@@ -5,6 +5,7 @@ import husacct.common.dto.AnalysedModuleDTO;
 import husacct.common.dto.ApplicationDTO;
 import husacct.common.dto.ExternalSystemDTO;
 import husacct.common.dto.ProjectDTO;
+import husacct.define.domain.SoftwareArchitecture;
 import husacct.define.domain.module.ModuleStrategy;
 import husacct.define.domain.services.WarningMessageService;
 import husacct.define.domain.services.stateservice.StateService;
@@ -19,7 +20,6 @@ import java.util.Arrays;
 import java.util.Collections;
 
 public class AnalyzedUnitComparator {
-
 	public AnalyzedModuleComponent calucalteChanges(
 			AbstractCombinedComponent left, AbstractCombinedComponent right) {
 
@@ -31,6 +31,9 @@ public class AnalyzedUnitComparator {
 		Collections.sort(right.getChildren());
 		if (leftsize == rightsize) {
 
+			
+			
+			
 			isequal(left, right, toBeDeleted, toBeAaded);
 		} else if (leftsize > rightsize) {
 			isLessEqual(left, right, toBeDeleted, toBeAaded);
@@ -41,38 +44,58 @@ public class AnalyzedUnitComparator {
 
 		}
 
+		
+		
+		
+		for (AbstractCombinedComponent newAbstractCombinedComponent : toBeAaded) {
+
+		
+			
+			
+			AnalyzedModuleComponent result = (AnalyzedModuleComponent)newAbstractCombinedComponent;
+			if (WarningMessageService.getInstance().hasCodeLevelWarning(result)) {
+
+			
+				result.freeze();
+				left.addChild(result);
+				
+
+			} else {
+
+				left.addChild(result);
+			}
+		}
+		
+		
+		
+		
+		
+		
 		for (AbstractCombinedComponent remove : toBeDeleted) {
 
 			AnalyzedModuleComponent unittoberemoved = ((AnalyzedModuleComponent) remove);
-			unittoberemoved.removeChildFromParent();
-
-			if (unittoberemoved.isMapped()) {
-
-				ModuleStrategy module = StateService.instance().getModulebySoftwareUnitUniqName(unittoberemoved.getUniqueName());
-				WarningMessageService.getInstance().addCodeLevelWarning(module.getId(), unittoberemoved);
-			}
-
+		
+			
+		
+           WarningMessageService.getInstance().addCodeLevelWarning((AnalyzedModuleComponent)unittoberemoved);
+			
+			
 
 			AbstractCombinedComponent parent = remove.getParentofChild();
 
 			int index = parent.getChildren().indexOf(remove);
-			parent.getChildren().remove(index);
+			parent.getChildren().remove(index);	
+			unittoberemoved.removeChildFromParent();
 		}
 
-		for (AbstractCombinedComponent newAbstractCombinedComponent : toBeAaded) {
-
-			if (WarningMessageService.getInstance().hasCodeLevelWarning((AnalyzedModuleComponent) newAbstractCombinedComponent)) {
-
-				((AnalyzedModuleComponent) newAbstractCombinedComponent).freeze();
-				left.addChild(newAbstractCombinedComponent);
-
-			} else {
-
-				left.addChild(newAbstractCombinedComponent);
-			}
-		}
+	
 		return (AnalyzedModuleComponent) left;
 	}
+
+
+
+
+
 
 	private void isequal(AbstractCombinedComponent left,
 			AbstractCombinedComponent right,
@@ -125,12 +148,11 @@ public class AnalyzedUnitComparator {
 		int leftsize = left.getChildren().size();
 		int rightsize = right.getChildren().size();
 
-		for (int i = (rightsize - (rightsize - leftsize)); i < rightsize; i++) {
+		for (int i = (rightsize - (rightsize - (leftsize))); i < rightsize; i++) {
 
 			boolean isfound = false;
 			for (AbstractCombinedComponent u : toBeDeleted) {
-				if (u.getUniqueName().equals(
-						right.getChildren().get(i).getUniqueName())) {
+				if (u.getUniqueName().equals(right.getChildren().get(i).getUniqueName())) {
 					isfound = true;
 					break;
 				}
@@ -179,7 +201,7 @@ public class AnalyzedUnitComparator {
 		JtreeController.instance().setLoadState(true);
 		AnalyzedModuleComponent rootComponent = new AnalyzedModuleComponent(
 				"root", "Application", "application", "public");
-		addExternalComponents(rootComponent);
+		//addExternalComponents(rootComponent);
 
 		ApplicationDTO application = ServiceProvider.getInstance()
 				.getControlService().getApplicationDTO();
@@ -187,8 +209,8 @@ public class AnalyzedUnitComparator {
 		for (ProjectDTO project : application.projects) {
 			AnalyzedModuleComponent projectComponent = new AnalyzedModuleComponent(
 					project.name, project.name, "root", "public");
-			for (AnalysedModuleDTO module : project.analysedModules) {
-
+			for (AnalysedModuleDTO module : ServiceProvider.getInstance().getAnalyseService().getRootModules()) {
+            
 				this.addChildComponents(projectComponent, module);
 			}
 			rootComponent.addChild(projectComponent);
@@ -213,7 +235,6 @@ public class AnalyzedUnitComparator {
 			this.addChildComponents(childComponent, subModule);
 		}
 
-
 		parentComponent.addChild(childComponent);
 		parentComponent.registerchildrenSize();
 	}
@@ -222,47 +243,57 @@ public class AnalyzedUnitComparator {
 		AnalyzedModuleComponent rootOfExterexternalLibrary = new AnalyzedModuleComponent(
 				"external library", "External Systems", "externalpackage",
 				"public");
-		
+
 		ExternalSystemDTO[] externalSystems = ServiceProvider.getInstance()
 				.getAnalyseService().getExternalSystems();
 		for (ExternalSystemDTO exe : externalSystems) {
-			
-				AnalyzedModuleComponent javalib = new AnalyzedModuleComponent(
-						exe.systemPackage, exe.systemName, "externallibrary",
-						"public");
-				rootOfExterexternalLibrary.addChild(javalib);
-			
-				
-			}
 
-		
+			AnalyzedModuleComponent javalib = new AnalyzedModuleComponent(
+					exe.systemPackage, exe.systemName, "externallibrary",
+					"public");
+			rootOfExterexternalLibrary.addChild(javalib);
+
+		}
 
 		root.addChild(rootOfExterexternalLibrary);
 
 	}
 
 	public AnalyzedModuleComponent getRootModel() {
-		if (!JtreeController.instance().isLoaded()|| !ServiceProvider.getInstance().getControlService().isPreAnalysed()) {
+		if (!JtreeController.instance().isLoaded()
+				|| !ServiceProvider.getInstance().getControlService()
+						.isPreAnalysed()) {
 
-			if(!ServiceProvider.getInstance().getControlService().isPreAnalysed())
-			{
-				AnalyzedModuleComponent root= JtreeController.instance().getRootOfModel();
+			if (!ServiceProvider.getInstance().getControlService()
+					.isPreAnalysed()) {
+				AnalyzedModuleComponent root = JtreeController.instance()
+						.getRootOfModel();
+				WarningMessageService.getInstance().resetNotAnalyzed();
 				WarningMessageService.getInstance().registerNotMappedUnits(root);
+				StateService.instance().registerImportedData();
 				return root;
 			}
 			JtreeController.instance().setLoadState(true);
-			JtreeController.instance().setCurrentTree(new AnalyzedModuleTree(getSoftwareUnitTreeComponents()));
-			AnalyzedModuleComponent root= JtreeController.instance().getRootOfModel();
+			JtreeController.instance().setCurrentTree(
+					new AnalyzedModuleTree(getSoftwareUnitTreeComponents()));
+			AnalyzedModuleComponent root = JtreeController.instance()
+					.getRootOfModel();
+			WarningMessageService.getInstance().resetNotAnalyzed();
 			WarningMessageService.getInstance().registerNotMappedUnits(root);
+			StateService.instance().registerImportedData();
 			return root;
 
 		} else {
-			AnalyzedModuleComponent left = JtreeController.instance()
-					.getRootOfModel();
-			AnalyzedModuleComponent right = getSoftwareUnitTreeComponents();
+		
+			AnalyzedModuleComponent left = JtreeController.instance().getRootOfModel();
+		    AnalyzedModuleComponent right = getSoftwareUnitTreeComponents();
+		
+			
 			calucalteChanges(left, right);
-			WarningMessageService.getInstance().registerNotMappedUnits(left);
+			WarningMessageService.getInstance().resetNotAnalyzed();
+			WarningMessageService.getInstance().registerNotMappedUnits(right);
 			WarningMessageService.getInstance().updateWarnings();
+			StateService.instance().registerImportedData();
 			return left;
 		}
 	}

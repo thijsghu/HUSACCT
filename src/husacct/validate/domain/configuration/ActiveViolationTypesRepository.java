@@ -81,18 +81,18 @@ class ActiveViolationTypesRepository {
 		return activeRuleType;
 	}
 
-	boolean isEnabled(String programmingLanguage, String ruleTypeKey, String violationTypeKey) {
+	public boolean isEnabled(String programmingLanguage, String ruleTypeKey, String violationTypeKey) {
 		List<ActiveRuleType> activeRuleTypes = this.currentActiveViolationTypes.get(programmingLanguage);
 		if (activeRuleTypes != null) {
 			for (ActiveRuleType activeRuleType : activeRuleTypes) {
-				if (activeRuleType.getRuleType().toLowerCase().equals(ruleTypeKey.toLowerCase())) {
-
-					if (activeRuleType.getViolationTypes().isEmpty()) {
+				if (activeRuleType.getRuleType().equalsIgnoreCase(ruleTypeKey)) {
+					List<ActiveViolationType> activeViolationTypes = activeRuleType.getViolationTypes();
+					if (activeViolationTypes.isEmpty()) {
 						return false;
 					}
 
-					for (ActiveViolationType activeViolationType : activeRuleType.getViolationTypes()) {
-						if (activeViolationType.getType().toLowerCase().equals(violationTypeKey.toLowerCase())) {
+					for (ActiveViolationType activeViolationType : activeViolationTypes) {
+						if (activeViolationType.getType().equalsIgnoreCase(violationTypeKey)) {
 							return activeViolationType.isEnabled();
 						}
 					}
@@ -104,11 +104,11 @@ class ActiveViolationTypesRepository {
 		return false;
 	}
 
-	Map<String, List<ActiveRuleType>> getActiveViolationTypes() {
+	public Map<String, List<ActiveRuleType>> getActiveViolationTypes() {
 		return currentActiveViolationTypes;
 	}
 
-	void setActiveViolationTypes(Map<String, List<ActiveRuleType>> activeViolationTypes) {
+	public void setActiveViolationTypes(Map<String, List<ActiveRuleType>> activeViolationTypes) {
 		for (Entry<String, List<ActiveRuleType>> activeViolationTypeSet : activeViolationTypes.entrySet()) {
 			if (programmingLanguageExists(activeViolationTypeSet.getKey())) {
 				setActiveViolationTypes(activeViolationTypeSet.getKey(), activeViolationTypes.get(activeViolationTypeSet.getKey()));
@@ -116,7 +116,7 @@ class ActiveViolationTypesRepository {
 		}
 	}
 
-	void setActiveViolationTypes(String programmingLanguage, List<ActiveRuleType> newActiveViolationTypes) {
+	public void setActiveViolationTypes(String programmingLanguage, List<ActiveRuleType> newActiveViolationTypes) {
 		if (programmingLanguageExists(programmingLanguage)) {
 			List<ActiveRuleType> checkedNewActiveViolationTypes = checkNewActiveViolationTypes(programmingLanguage, newActiveViolationTypes);
 

@@ -1,8 +1,10 @@
 package husacct.define.presentation.jpanel;
 
 import husacct.ServiceProvider;
+import husacct.common.help.presentation.HelpableJPanel;
 import husacct.common.services.IServiceListener;
 import husacct.define.domain.services.DomainGateway;
+import husacct.define.presentation.draganddrop.customdroptargetlisterner.EditpanelDropListener;
 import husacct.define.presentation.utils.DefaultMessages;
 import husacct.define.task.DefinitionController;
 
@@ -21,45 +23,52 @@ import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-public class EditModuleJPanel extends JPanel implements KeyListener, Observer,
-IServiceListener {
+public class EditModuleJPanel extends HelpableJPanel implements KeyListener, Observer,
+		IServiceListener {
 
 	private static final long serialVersionUID = -9020336576931490389L;
 	private int currentSelection;
+	private String _type;
 	private JLabel descriptionLabel;
 	private JScrollPane descriptionScrollPane;
 	private JTextArea descriptionTextArea;
 	private String[] facadeType = { "Facade" };
 	private JComboBox<?> moduleTypeComboBox;
+	private EditpanelDropListener listener = new EditpanelDropListener(this);
 	ActionListener moduleTypeComboboxOnChangeListener = new ActionListener() {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			JComboBox selectedCombobox = (JComboBox) e.getSource();
-			if (currentSelection != selectedCombobox.getSelectedIndex()) {
+			
+			String type_ = (String) moduleTypeComboBox.getSelectedItem();
+			if (!_type.equals(type_) &&!type_.toLowerCase().equals("facade")) {
 				String moduleName = nameTextfield.getText();
 				String moduleDescription = descriptionTextArea.getText();
-				String type = (String) selectedCombobox
-						.getItemAt(selectedCombobox.getSelectedIndex());
-
-				DefinitionController.getInstance().updateModule(moduleName,
-						moduleDescription, type);
+				String type = (String) moduleTypeComboBox
+						.getItemAt(moduleTypeComboBox.getSelectedIndex());
+          
+				
+				DomainGateway.getInstance().updateModule(moduleName, moduleDescription, type);
+				//DefinitionController.getInstance().updateModule(moduleName,
+			//			moduleDescription, type);
 			}
 
 		}
 	};
 	private JLabel moduleTypeLabel;
 	private String[] moduleTypes = {
-			ServiceProvider.getInstance().getLocaleService().getTranslatedString("SubSystem"),
-			ServiceProvider.getInstance().getLocaleService().getTranslatedString("Layer"),
-			ServiceProvider.getInstance().getLocaleService().getTranslatedString("Component"),
-			ServiceProvider.getInstance().getLocaleService().getTranslatedString("ExternalLibrary") 
-	};
+			ServiceProvider.getInstance().getLocaleService()
+					.getTranslatedString("SubSystem"),
+			ServiceProvider.getInstance().getLocaleService()
+					.getTranslatedString("Layer"),
+			ServiceProvider.getInstance().getLocaleService()
+					.getTranslatedString("Component"),
+			ServiceProvider.getInstance().getLocaleService()
+					.getTranslatedString("ExternalLibrary") };
 	private JLabel nameLabel;
 
 	private JTextField nameTextfield;
@@ -82,7 +91,7 @@ IServiceListener {
 				GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 		descriptionScrollPane.setPreferredSize(new java.awt.Dimension(142, 26));
 		descriptionScrollPane
-		.setViewportView(createModuleDescriptionTextArea());
+				.setViewportView(createModuleDescriptionTextArea());
 	}
 
 	private void addModuleNameComponent() {
@@ -94,6 +103,7 @@ IServiceListener {
 				.getTranslatedString("ModuleName"));
 
 		nameTextfield = new JTextField();
+		listener.addTarget(nameTextfield);
 		nameTextfield.setToolTipText(DefaultMessages.TIP_MODULE);
 		this.add(nameTextfield, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
 				GridBagConstraints.FIRST_LINE_START,
@@ -113,25 +123,29 @@ IServiceListener {
 				0.0, GridBagConstraints.FIRST_LINE_START,
 				GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 		moduleTypeComboBox
-		.addActionListener(moduleTypeComboboxOnChangeListener);
+				.addActionListener(moduleTypeComboboxOnChangeListener);
 
 	}
 
 	private JTextArea createModuleDescriptionTextArea() {
 		descriptionTextArea = new JTextArea();
+		listener.addTarget(descriptionTextArea);
 		descriptionTextArea.setFont(new java.awt.Font("Tahoma", 0, 11));
 		descriptionTextArea
-		.setToolTipText(DefaultMessages.TIP_MODULEDESCRIPTION);
+				.setToolTipText(DefaultMessages.TIP_MODULEDESCRIPTION);
 		descriptionTextArea.addKeyListener(this);
 		return descriptionTextArea;
 	}
 
 	private int getModuleType(String type) {
-		DefaultComboBoxModel defaultModel = new DefaultComboBoxModel(moduleTypes);
+		DefaultComboBoxModel defaultModel = new DefaultComboBoxModel(
+				moduleTypes);
 		moduleTypeComboBox.setModel(defaultModel);
-		for(int i=0; i < moduleTypes.length; i++){
-			if(type.equalsIgnoreCase(moduleTypes[i])){
+		_type= type;
+		for (int i = 0; i < moduleTypes.length; i++) {
+			if (type.equalsIgnoreCase(moduleTypes[i])) {
 				currentSelection = i;
+				
 				return i;
 			}
 		}
@@ -153,7 +167,7 @@ IServiceListener {
 		addModuleDescriptionComponent();
 		addModuleType();
 		ServiceProvider.getInstance().getControlService()
-		.addServiceListener(this);
+				.addServiceListener(this);
 
 	}
 
@@ -200,6 +214,7 @@ IServiceListener {
 	@Override
 	public void update(Observable o, Object arg) {
 		resetGUI();
+	try{
 		Long moduleId = Long.parseLong(arg.toString());
 		if (moduleId != -1) {
 			HashMap<String, Object> moduleDetails = DefinitionController
@@ -207,19 +222,27 @@ IServiceListener {
 			nameTextfield.setText((String) moduleDetails.get("name"));
 			descriptionTextArea.setText((String) moduleDetails
 					.get("description"));
-			String type = ServiceProvider.getInstance().getLocaleService().getTranslatedString((String) moduleDetails.get("type"));
+			String type = ServiceProvider.getInstance().getLocaleService()
+					.getTranslatedString((String) moduleDetails.get("type"));
 			moduleTypeComboBox.setEnabled(true);
 			moduleTypeComboBox.setSelectedIndex(getModuleType(type));
 		}
 		this.repaint();
+	}catch(NumberFormatException e)
+	{
+		
+	}
 	}
 
 	private void updateModule() {
 		String moduleName = nameTextfield.getText();
 		String moduleDescription = descriptionTextArea.getText();
 		DomainGateway.getInstance().updateModule(moduleName, moduleDescription);
-		if(moduleTypeComboBox.getSelectedItem().toString().equalsIgnoreCase(moduleTypes[2])){
+		if (moduleTypeComboBox.getSelectedItem().toString()
+				.equalsIgnoreCase(moduleTypes[2])) {
 			DomainGateway.getInstance().updateFacade(moduleName);
 		}
 	}
+	
+	
 }

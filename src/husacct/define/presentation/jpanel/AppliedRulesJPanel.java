@@ -1,6 +1,7 @@
 package husacct.define.presentation.jpanel;
 
 import husacct.ServiceProvider;
+import husacct.common.help.presentation.HelpableJPanel;
 import husacct.common.services.IServiceListener;
 import husacct.control.presentation.util.DialogUtils;
 import husacct.define.domain.services.DomainGateway;
@@ -36,8 +37,8 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableModel;
 
-public class AppliedRulesJPanel extends JPanel implements ActionListener,
-Observer, IServiceListener {
+public class AppliedRulesJPanel extends HelpableJPanel implements ActionListener,
+		Observer, IServiceListener {
 
 	private static final long serialVersionUID = -2052083182258803790L;
 
@@ -61,11 +62,14 @@ Observer, IServiceListener {
 	 */
 	@Override
 	public void actionPerformed(ActionEvent action) {
-		if (action.getSource() == addRuleButton || action.getSource() == addRuleItem) {
+		if (action.getSource() == addRuleButton
+				|| action.getSource() == addRuleItem) {
 			addRule();
-		} else if (action.getSource() == editRuleButton	|| action.getSource() == editRuleItem) {
+		} else if (action.getSource() == editRuleButton
+				|| action.getSource() == editRuleItem) {
 			editRule();
-		} else if (action.getSource() == removeRuleButton|| action.getSource() == removeRuleItem) {
+		} else if (action.getSource() == removeRuleButton
+				|| action.getSource() == removeRuleItem) {
 			removeRules();
 		}
 	}
@@ -139,9 +143,9 @@ Observer, IServiceListener {
 			// TODO Test popup
 			JOptionPane.showMessageDialog(this,
 					ServiceProvider.getInstance().getLocaleService()
-					.getTranslatedString("ModuleSelectionError"),
+							.getTranslatedString("ModuleSelectionError"),
 					ServiceProvider.getInstance().getLocaleService()
-					.getTranslatedString("WrongSelectionTitle"),
+							.getTranslatedString("WrongSelectionTitle"),
 					JOptionPane.ERROR_MESSAGE);
 		}
 	}
@@ -205,9 +209,9 @@ Observer, IServiceListener {
 		} else {
 			JOptionPane.showMessageDialog(this,
 					ServiceProvider.getInstance().getLocaleService()
-					.getTranslatedString("RuleSelectionError"),
+							.getTranslatedString("RuleSelectionError"),
 					ServiceProvider.getInstance().getLocaleService()
-					.getTranslatedString("WrongSelectionTitle"),
+							.getTranslatedString("WrongSelectionTitle"),
 					JOptionPane.ERROR_MESSAGE);
 		}
 	}
@@ -270,7 +274,7 @@ Observer, IServiceListener {
 		createPopupMenu();
 		setButtonEnableState();
 		ServiceProvider.getInstance().getLocaleService()
-		.addServiceListener(this);
+				.addServiceListener(this);
 	}
 
 	private void removeRules() {
@@ -336,7 +340,7 @@ Observer, IServiceListener {
 					.getSelectedModuleId();
 			JPanelStatus.getInstance(
 					ServiceProvider.getInstance().getLocaleService()
-					.getTranslatedString("UpdatingRules")).start();
+							.getTranslatedString("UpdatingRules")).start();
 			if (moduleId != -1) {
 
 				// Get all appliedRuleIds from the service
